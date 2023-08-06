@@ -3,26 +3,26 @@ create procedure syn.usp_ImportFileCustomerSeasonal
 as
 set nocount on
 begin
-	declare @RowCount int = (select count(*) from syn.SA_CustomerSeasonal)
-	declare @ErrorMessage varchar(max)
+	declare @RowCount int = (select count(*) from syn.SA_CustomerSeasonal) 
+	declare @ErrorMessage varchar(max) --все переменные должны задаваться в одном объявлении declare, рекомендуется не использовать длину поля max
 
--- Проверка на корректность загрузки
+-- Проверка на корректность загрузки    --Комментарий должен быть с тем же отступом, как и код, к которому он относится
 	if not exists (
-	select 1
-	from syn.ImportFile as f
-	where f.ID = @ID_Record
-		and f.FlagLoaded = cast(1 as bit)
+	select 1 --Должен быть 1 отступ в блоке после if и все строки на одном уровне
+	from syn.ImportFile as f 
+	where f.ID = @ID_Record  
+		and f.FlagLoaded = cast(1 as bit) 
 	)
 		begin
 			set @ErrorMessage = 'Ошибка при загрузке файла, проверьте корректность данных'
 
 			raiserror(@ErrorMessage, 3, 1)
-			return
+			return --должна быть пустая строка перед return
 		end
 
-	CREATE TABLE #ProcessedRows (
+	CREATE TABLE #ProcessedRows ( 
 		ActionType varchar(255),
-		ID int
+		ID int --обязательно наличие системных полей
 	)
 	
 	--Чтение из слоя временных данных
@@ -35,7 +35,7 @@ begin
 		,cd.ID as ID_dbo_CustomerDistributor
 		,cast(isnull(cs.FlagActive, 0) as bit) as FlagActive
 	into #CustomerSeasonal
-	from syn.SA_CustomerSeasonal cs
+	from syn.SA_CustomerSeasonal cs --пропущено as
 		join dbo.Customer as cc on cc.UID_DS = cs.UID_DS_Customer
 			and cc.ID_mapping_DataSource = 1
 		join dbo.Season as s on s.Name = cs.Season
@@ -47,11 +47,11 @@ begin
 		and try_cast(isnull(cs.FlagActive, 0) as bit) is not null
 
 	-- Определяем некорректные записи
-	-- Добавляем причину, по которой запись считается некорректной
+	-- Добавляем причину, по которой запись считается некорректной --многострочный комментарий должен быть выделен /* */
 	select
 		cs.*
 		,case
-			when cc.ID is null then 'UID клиента отсутствует в справочнике "Клиент"'
+			when cc.ID is null then 'UID клиента отсутствует в справочнике "Клиент"' --необходимо чтобы then был с 2 отступами от case
 			when cd.ID is null then 'UID дистрибьютора отсутствует в справочнике "Клиент"'
 			when s.ID is null then 'Сезон отсутствует в справочнике "Сезон"'
 			when cst.ID is null then 'Тип клиента в справочнике "Тип клиента"'
@@ -61,9 +61,9 @@ begin
 		end as Reason
 	into #BadInsertedRows
 	from syn.SA_CustomerSeasonal as cs
-	left join dbo.Customer as cc on cc.UID_DS = cs.UID_DS_Customer
+	left join dbo.Customer as cc on cc.UID_DS = cs.UID_DS_Customer --все виды join должны писаться с одним отступом
 		and cc.ID_mapping_DataSource = 1
-	left join dbo.Customer as cd on cd.UID_DS = cs.UID_DS_CustomerDistributor and cd.ID_mapping_DataSource = 1
+	left join dbo.Customer as cd on cd.UID_DS = cs.UID_DS_CustomerDistributor and cd.ID_mapping_DataSource = 1 -- and должно быть на новой строчке и выровнено на 1 табуляцию от join
 	left join dbo.Season as s on s.Name = cs.Season
 	left join syn.CustomerSystemType as cst on cst.Name = cs.CustomerSystemType
 	where cc.ID is null
