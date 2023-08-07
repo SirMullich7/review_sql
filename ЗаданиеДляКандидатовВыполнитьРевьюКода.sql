@@ -22,7 +22,7 @@ begin
 
 	CREATE TABLE #ProcessedRows ( 
 		ActionType varchar(255),
-		ID int --обязательно наличие системных полей
+		ID int 
 	)
 	
 	--Чтение из слоя временных данных
@@ -58,8 +58,8 @@ begin
 			when try_cast(cs.DateBegin as date) is null then 'Невозможно определить Дату начала'
 			when try_cast(cs.DateEnd as date) is null then 'Невозможно определить Дату начала'
 			when try_cast(isnull(cs.FlagActive, 0) as bit) is null then 'Невозможно определить Активность'
-		end as Reason
-	into #BadInsertedRows
+		end as Reason --необходим пробел между различными блоками
+	into #BadInsertedRows --в начале скрипта нужно писать поясняющий комментарий
 	from syn.SA_CustomerSeasonal as cs
 	left join dbo.Customer as cc on cc.UID_DS = cs.UID_DS_Customer --все виды join должны писаться с одним отступом
 		and cc.ID_mapping_DataSource = 1
